@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-import pytz
 import glob
 import json
 import math
@@ -10,8 +9,6 @@ import pathlib
 import subprocess
 from os import path
 from pprint import pprint
-from dateutil import parser
-from datetime import datetime
 
 
 # h264_nvenc  # Nvidia GPU (win/linux)
