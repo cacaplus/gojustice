@@ -27,31 +27,26 @@
 
 ### A. 懶人包安裝法
 
-1. **安裝 GoJustice**  
+1. **下載 GoJustice 執行檔**  
    前往 [Release](https://github.com/cacaplus/gojustice/releases) 下載最新版 `GoJustice` ，解壓縮到一個資料夾，如 `C:\GoJustice`。
 
-2. **安裝 ffmpeg**  
-   前往 [官方網站](https://ffmpeg.org/) 下載；  
-   Windows 版下載網址為 https://ffmpeg.zeranoe.com/builds/  
-   將下載的 `ffmpeg` 壓縮檔 `bin` 資料夾中的所有檔案，解壓縮至 `GoJustice` 中的 `bin` 資料夾。  
+2. **下載 ffmpeg**  
+   前往 https://ffmpeg.zeranoe.com/builds/   
+   點選底下的藍色按鈕 `Download Build` 下載；  
+   將下載的 `ffmpeg` 解壓縮，`bin` 資料夾中的所有檔案，解壓縮至 `GoJustice` 中的 `bin` 資料夾。  
  
        因授權限制，沒辦法將 ffmpeg 包成懶人包。
 
 
-### B. 全自己來安裝
+### B. 全自己來安裝 (不建議)
 
 1. **安裝 Python** (Python 3.8)  
    請官方網站下載安裝包，安裝時請勾選 `Add Python 3.8 to PATH`
 
-2. **安裝 Python Lib**  
-   
-       pip install pytz  
-       pip install python-dateutil
-
-3. **安裝 GoJustice**  
+2. **下載 GoJustice 原始檔**  
    下載 `GoJustice` 原始檔。
 
-4. **安裝 ffmpeg**  
+3. **下載 ffmpeg**  
    前往 [官方網站](https://ffmpeg.org/) 下載；  
    Windows 版下載網址為 https://ffmpeg.zeranoe.com/builds/  
    將下載的 `ffmpeg` 壓縮檔 `bin` 資料夾中的所有檔案，解壓縮至 `GoJustice` 中的 `bin` 資料夾。
