@@ -4,8 +4,9 @@
 
 台灣的交通環境，從道路品質、道路規劃到用路人水準都是個悲劇。許多車友會使用行車紀錄器自保，但有些機種，如 GoPro，無法在錄製時就加上時間戳記，造成檢舉時的巨大問題。因此我寫了這個小工具，讓正義夥伴們能夠快速方便地加上時間戳記。
 
-版本：1.0
-首頁：[GitHub](https://github.com/cacaplus/gojustice)
+* 版　本：1.0
+* 首　頁：[GitHub](https://github.com/cacaplus/gojustice)
+* 下載頁：[GitHub Release Page](https://github.com/cacaplus/gojustice/releases)
 
 
 ## 功能
