@@ -1,5 +1,6 @@
 # GoJustice 影片時間戳記助手
-##  GoJustice Video Timestamp Helper
+
+**GoJustice Video Timestamp Helper**
 
 台灣的交通環境是個悲劇，從道路品質、道路規劃到用路人水準。許多車友會使用行車紀錄器自保，但有些機種並不會自動加上時間戳記，造成檢舉時的巨大問題。因此我寫了這個小工具，讓正義夥伴們有個快速好用的工具可以補上時間戳記。
 
@@ -32,34 +33,34 @@
 
 ### B. 全自己來安裝
 
-1. 安裝最新的 Python，目前使用 Python 3.8
-   請官方網站下載：https://www.python.org/downloads/
-   安裝時請勾選 `Add Python 3.8 to PATH`
+1. **安裝 Python** (Python 3.8)  
+   請官方網站下載安裝包，安裝時請勾選 `Add Python 3.8 to PATH`
 
-2. 安裝用到的套件，請按 Win+R 叫出「執行」，輸入 `cmd` 後按下確定，
-   跳出黑色的視窗後，請輸入以下兩行字：
-   `pip install pytz`
-   `pip install python-dateutil`
+2. **安裝 Python Lib**  
+   
+       pip install pytz  
+       pip install python-dateutil
 
-3. 下載並解壓縮 `GoJusticeVTH` 到一個資料夾，如 `C:\GoJusticeVTH`。
+3. **安裝 GoJustice**  
+   下載並解壓縮 `GoJustice` 到一個資料夾，如 `C:\GoJustice`。
 
-4. 下載 `ffmpeg` 並將其解壓縮
-   官方網站：https://ffmpeg.org/
-   Windows版下載：https://ffmpeg.zeranoe.com/builds/
-   將下載的 `ffmpeg` 壓縮檔 `bin` 資料夾中的所有檔案解壓縮至 `GoJusticeVTH` 中的 `bin` 資料夾
+4. **安裝 ffmpeg**  
+   前往 [官方網站](https://ffmpeg.org/) 下載；  
+   Windows 版下載網址為 https://ffmpeg.zeranoe.com/builds/  
+   將下載的 `ffmpeg` 壓縮檔 `bin` 資料夾中的所有檔案，解壓縮至 `GoJustice` 中的 `bin` 資料夾。
 
 
 ## 使用說明
 
-1. 將原始影片複製至 `input` 資料夾。
+1. 將原始影片複製至 `GoJustice/input` 資料夾。
 
 2. 視需求將檔名加上設定參數。
 
-3. 點兩下，執行 `GoJusticeVTH` 主執行檔，會跑出命令提示字元的黑框。
+3. 點兩下，執行 `GoJustice.py` 主執行檔，會跑出命令提示字元的黑框。
 
 4. 命令提示字元的黑框將顯示目前的轉檔狀態。
 
-5. 加上日期的影片檔將會出現在 `output` 資料夾。
+5. 加上日期的影片檔將會出現在 `GoJustice/output` 資料夾。
 
 
 ## 設定轉檔參數
