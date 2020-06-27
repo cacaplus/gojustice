@@ -7,12 +7,13 @@
 如果您喜歡這個程式，歡迎分享；  
 若您的影片使用本程式產生，也歡迎在影片貼文加上 `#gogojustice`。
 
-* 版　本：0.9
+* 版　本：0.91
 * 首　頁：[GitHub](https://github.com/cacaplus/gojustice)
 * 下載頁：[GitHub Release Page](https://github.com/cacaplus/gojustice/releases)
 
 ![輸出範例](https://caca.plus/project/gojustice/timestamp_sample.jpg)
-上圖為輸出範例截圖，日期與時間皆為測試用，非實際發生時間。
+上圖為輸出範例截圖，日期與時間皆為測試用，非實際發生時間。  
+您也可以至 [YouTube](https://www.youtube.com/watch?v=PvK3Wrv6bQc) 瀏覽動態範本。
 
 
 ## 功能
