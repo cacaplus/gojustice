@@ -39,7 +39,7 @@ error  = []
 
 
 os.system('cls')
-print( 'GoJustice 影片時間戳記燒錄器 1.0' )
+print( 'GoJustice 影片時間戳記燒錄器 0.9' )
 print( 'https://github.com/cacaplus/gojustice\n' )
 
 
@@ -49,8 +49,9 @@ ffprobeBinPath  = ''
 
 PATTERN = {
     'fileName'  : r'.+\.(mp4|mov|avi)$',
-    'fileTimeGP': r'^((\d{8}|\d{4})_(\d{9}))',
-    'fileTime'  : r'^((\d{8}|\d{4})_(\d{6}))',
+    'fileTimeGP': r'^((\d{8})([-_])(\d{9}))',
+    'fileTime'  : r'^((\d{8})([-_])(\d{6}))',
+    'fileTimeS' : r'^((\d{4})([-_])(\d{6}))',
     'fileParam' : r'(_@(.+)?\.)',
 
     'PARAM' : {
@@ -172,7 +173,7 @@ while True:
             error.append( '[E0102] 找不到可用的 h264 編碼器，請將此錯誤通知開發者。' )
 
             print( '    中止' )
-            breakpoint
+            break
 
         break
 
@@ -244,15 +245,22 @@ while True:
             # 2. 檢查檔名的時間
             matchGP = re.search( PATTERN['fileTimeGP'], fileName, flags = re.IGNORECASE )
             match   = re.search( PATTERN['fileTime'],   fileName, flags = re.IGNORECASE )
+            matchS  = re.search( PATTERN['fileTimeS'],  fileName, flags = re.IGNORECASE )
 
-            if match == None :
-                continue
+            videoTime = None
 
             if matchGP != None :
-                videoTime = time.mktime( time.strptime( matchGP.group(1), '%Y%m%d_%H%M%S000' ) )
+                videoTime = time.mktime( time.strptime( matchGP.group(1), '%Y%m%d'+ matchGP.group(3) +'%H%M%S000' ) )
                 videoTime += 28800  # fix for gopro +0800
             else :
-                videoTime = time.mktime( time.strptime( match.group(1), '%Y%m%d_%H%M%S' ) )
+                if match != None :
+                    videoTime = time.mktime( time.strptime( match.group(1), '%Y%m%d'+ match.group(3) +'%H%M%S' ) )
+                else :
+                    y = time.strftime( '%Y' )
+                    videoTime = time.mktime( time.strptime( time.strftime( '%Y' ) + matchS.group(1), '%Y%m%d'+ matchS.group(3) +'%H%M%S' ) )
+
+            if videoTime == None :
+                continue
 
             videoFile['videoTime'] = videoTime
 
@@ -268,7 +276,7 @@ while True:
             videoFile['param']['Size']       = None
             videoFile['param']['Resize']     = None
             videoFile['param']['Framerate']  = None
-            videoFile['param']['Size']       = '30'
+            videoFile['param']['Size']       = 30
 
             if match != None :
                 paramStr   = match.group(2)
