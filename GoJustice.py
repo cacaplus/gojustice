@@ -39,7 +39,7 @@ error  = []
 
 
 os.system('cls')
-print( 'GoJustice 影片時間戳記燒錄器 0.9' )
+print( 'GoJustice 影片時間戳記燒錄器 0.91' )
 print( 'https://github.com/cacaplus/gojustice\n' )
 
 
@@ -98,12 +98,12 @@ defaultSizeMax    =      29  # 30 MB
 # 主流程
 while True:
 
-    print( '取得設定：\n' )
+    print( '  = 取得設定：\n' )
 
     # 環境檢查
     while True:
 
-        print( '    正在檢查執行環境...' )
+        print( '     1. 正在檢查執行環境...' )
 
         # 清除暫存檔
         srtList = glob.glob( './*.srt' )
@@ -148,7 +148,7 @@ while True:
     # 確認使用的 codec
     while True:
 
-        print( '    正在確認編碼器...' )
+        print( '     2. 正在確認編碼器...' )
 
         for i in range( len( encoderList ) ) :
             enc = encoderList[i]
@@ -183,7 +183,7 @@ while True:
 
     # 尋找檔案
     while True:
-        print( '    正在取得檔案清單與設定...' )
+        print( '     3. 正在取得檔案清單與設定...' )
 
         fileListOrig = glob.glob( './input/*' )
 
@@ -351,7 +351,7 @@ while True:
     # 處理檔案
     while len( videoList ) > 0:
 
-        print( '\n找到以下檔案：\n' )
+        print( '\n  = 找到以下檔案：\n' )
 
         # 列出檔案
         for i in range( len( videoList ) ) :
@@ -360,7 +360,7 @@ while True:
             print( '. ' + videoList[i]['fileName'] )
 
         time.sleep( 0.1 )
-        print( '\n開始轉檔：\n' )
+        print( '\n  = 開始轉檔：\n' )
 
         # 轉檔
         for i in range( len( videoList ) ) :
@@ -438,20 +438,40 @@ while True:
             result = pipeResult.stdout.decode('utf-8')
             os.remove( videoFile['subFile']  )
 
+        print( '' )
+
         break
+
+
+    if len( videoList ) == 0 :
+        print( '\n    找不到檔案。\n' )
 
 
     # 主流程結束
     break
 
+print( '    ----------\n' )
 
 if len( error ) > 0 :
 
-    print( '\n發生錯誤：\n' )
+    print( '  = 發生錯誤：\n' )
 
     for i in range( len( error ) ):
         print( '    ' + error[i] )
 
 else :
 
-    print( '\n轉檔完成，共 '+ str( len( videoList ) ) + ' 個檔案。' )
+    if len( videoList ) > 0 :
+        print( '    執行完成，共處理 '+ str( len( videoList ) ) + ' 個檔案。' )
+
+
+    else :
+        print( '    執行完成，未處理任何檔案。' )
+
+
+print( '' )
+print( '    若您喜歡這個程式，歡迎分享；' )
+print( '    若您的影片使用本程式產生，也歡迎在影片貼文加上 #gogojustice。' )
+print( '' )
+
+input('    請按 Enter 結束程式...')
