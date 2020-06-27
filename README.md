@@ -4,7 +4,7 @@
 
 台灣的交通環境，從道路品質、道路規劃到用路人水準都是個悲劇。許多車友會使用行車紀錄器自保，但有些機種，如 GoPro，無法在錄製時就加上時間戳記，造成檢舉時的巨大問題。因此我寫了這個小工具，讓正義夥伴們能夠快速方便地加上時間戳記。
 
-* 版　本：1.0
+* 版　本：0.9
 * 首　頁：[GitHub](https://github.com/cacaplus/gojustice)
 * 下載頁：[GitHub Release Page](https://github.com/cacaplus/gojustice/releases)
 
@@ -34,14 +34,7 @@
 1. **下載 GoJustice 執行檔**  
    前往 [Release](https://github.com/cacaplus/gojustice/releases) 下載最新版 `GoJustice` ，解壓縮到一個資料夾，如 `C:\GoJustice`。
 
-2. **下載 ffmpeg**  
-   `GoJustice` 使用 `ffmpeg` 轉檔，因此必須配置 `ffmpeg` 才能正常運作。   
-
-   前往 https://ffmpeg.zeranoe.com/builds/   
-   點選底下的藍色按鈕 `Download Build` 下載；  
-   將下載的 `ffmpeg` 解壓縮，`bin` 資料夾中的所有檔案，解壓縮至 `GoJustice` 中的 `bin` 資料夾。  
- 
-       因授權限制，沒辦法將 ffmpeg 包成懶人包。
+2. **開始使用**
 
 
 ### B. 全自己來安裝
