@@ -1,12 +1,9 @@
 # GoJustice 影片編輯助理
 
-**GoJustice Video Editing Assistant**
+### 打字就能編輯影片！
 
-> **打字就能編輯影片**
-
-有些攝影機，如 GoPro，無法在錄製的時候就加上時間戳記，藉由後製要剪輯、轉檔、浮水印、**加時間** 等，難度高，也沒效率。
-
-因此我寫了 **GoJustice** 這個工具，只要在檔名上加好參數，就可以執行編輯，快速產生結果。
+有些攝影機，如 GoPro，無法在錄製的時候就加上時間戳記，而後製要進行剪輯、轉檔、浮水印、**加時間** 等，使用一般軟體既麻煩也沒效率。
+因此我寫了 **GoJustice** 這個工具，只要在檔名上加好參數，就可以進行編輯。
 
 如果您喜歡這個程式，歡迎分享；若您的影片使用本程式產生，也歡迎在影片貼文加上 `#gogojustice`。
 
@@ -46,7 +43,7 @@
 ### A. 半懶人包安裝法
 
 1. **下載 GoJustice 執行檔**  
-   前往 [Release](https://github.com/cacaplus/gojustice/releases) 下載最新版 `GoJustice` ，解壓縮到一個資料夾，如 `C:\GoJustice`。
+   前往 [Release](https://github.com/cacaplus/gojustice/releases) 下載最新版 `GoJustice` ，解壓縮到一個資料夾，如 `D:\GoJustice`。
 
 2. **開始使用**
 
