@@ -17,6 +17,9 @@ from pprint import pprint
 # h264_mf     # MediaFoundation (win)
 
 
+DEBUG = False
+
+
 def toTimecode( sec ) :
     m = math.floor( sec / 60 )
     s = sec % 60
@@ -39,7 +42,7 @@ error  = []
 
 
 os.system('cls')
-print( 'GoJustice 影片時間戳記燒錄器 0.91' )
+print( 'GoJustice 影片時間戳記燒錄器 0.95' )
 print( 'https://github.com/cacaplus/gojustice\n' )
 
 
@@ -64,6 +67,8 @@ PATTERN = {
         'Size'        : r'^S(\d+)m$',
         'Resize'      : r'^R(\d{4})$',
         'Framerate'   : r'^F(\d{2,3})$',
+        'Watermark'   : r'^(W(\d+)?)$',
+        'DisableTime' : r'^TX$',
 
         # 區域預設
         'isHighway'   : r'^HW$',
@@ -80,10 +85,11 @@ FPS = {
     60 : 'fps=60000/1001',
 }
 
-fileListOrig    = []
-videoListOrig   = []
-videoList       = []
-videoResultList = []
+fileListOrig     = []
+videoListOrig    = []
+videoList        = []
+invalidVideoList = []
+videoResultList  = []
 
 encoder = None
 encoderList = [ 'h264_amf', 'h264_nvenc', 'h264_qsv', 'h264_mf' ]
@@ -98,7 +104,7 @@ defaultSizeMax    =      29  # 30 MB
 # 主流程
 while True:
 
-    print( '  = 取得設定：\n' )
+    print( '  # 取得設定：\n' )
 
     # 環境檢查
     while True:
@@ -123,6 +129,9 @@ while True:
 
         if path.exists( 'output' ) == False :
             os.mkdir( 'output' )
+
+        if path.exists( 'watermark' ) == False :
+            os.mkdir( 'watermark' )
 
         # 檢查是否有 ffmpeg
         if( path.exists( 'bin/ffmpeg.exe' ) == False
@@ -210,6 +219,8 @@ while True:
                 'height'   : 0,
                 'bitrate'  : 0,
                 'framerate': None,
+                'warn'     : [],
+                'error'    : [],
                 'param'    : {}
             }
 
@@ -227,12 +238,12 @@ while True:
 
             fr = result['streams'][0]['r_frame_rate'].split('/')
 
-            videoFile['codec']     =        result['streams'][0]['codec_name']
-            videoFile['duration']  = float( result['streams'][0]['duration'] )
-            videoFile['width']     =   int( result['streams'][0]['width'] )
-            videoFile['height']    =   int( result['streams'][0]['height'] )
-            videoFile['bitrate']   =   int( result['streams'][0]['bit_rate'][0:-3] )
-            videoFile['framerate'] = round( int(fr[0]) / int(fr[1]), 2 )
+            videoFile['codec']       =        result['streams'][0]['codec_name']
+            videoFile['duration']    = float( result['streams'][0]['duration'] )
+            videoFile['width']       =   int( result['streams'][0]['width'] )
+            videoFile['height']      =   int( result['streams'][0]['height'] )
+            videoFile['bitrate']     =   int( result['streams'][0]['bit_rate'][0:-3] )
+            videoFile['framerate']   = round( int(fr[0]) / int(fr[1]), 2 )
 
             if 'tags' in result['streams'][0] :
                 if 'handler_name' in result['streams'][0]['tags'] :
@@ -267,16 +278,18 @@ while True:
             # 3. 檢查所有設定的參數
             match = re.search( PATTERN['fileParam'], fileName, flags = re.IGNORECASE )
 
-            videoFile['param']['AllowAudio'] = False
-            videoFile['param']['Cut']        = None
-            videoFile['param']['Duration']   = None
-            videoFile['param']['CutLength']  = None
-            videoFile['param']['CutRange']   = None
-            videoFile['param']['Bitrate']    = None
-            videoFile['param']['Size']       = None
-            videoFile['param']['Resize']     = None
-            videoFile['param']['Framerate']  = None
-            videoFile['param']['Size']       = 30
+            videoFile['param']['AllowAudio']  = False
+            videoFile['param']['Cut']         = None
+            videoFile['param']['Duration']    = None
+            videoFile['param']['CutLength']   = None
+            videoFile['param']['CutRange']    = None
+            videoFile['param']['Bitrate']     = None
+            videoFile['param']['Size']        = None
+            videoFile['param']['Resize']      = None
+            videoFile['param']['Framerate']   = None
+            videoFile['param']['Size']        = 30
+            videoFile['param']['Watermark']   = None
+            videoFile['param']['DisableTime'] = False
 
             if match != None :
                 paramStr   = match.group(2)
@@ -289,11 +302,18 @@ while True:
                         if paramItemMatch != None :
 
                             if ppi == 'AllowAudio' :
-                                videoFile['param'][ ppi ] = True
+                                videoFile['param']['AllowAudio'] = True
+
+                            if ppi == 'DisableTime' :
+                                videoFile['param']['DisableTime'] = True
 
                             if ppi == 'CutLength' :
                                 CutStart = int( paramItemMatch.group(1) ) * 60 + int( paramItemMatch.group(2) )
                                 CutLen   = float( paramItemMatch.group(3) ) / 100
+                                if CutStart > videoFile['duration'] :
+                                    videoFile['error'].append('開始時間錯誤')
+                                if CutLen <= 0 :
+                                    videoFile['error'].append('長度不得為0')
                                 videoFile['param']['Cut'] = {
                                     'start' : CutStart,
                                     'len'   : CutLen
@@ -303,6 +323,12 @@ while True:
                             if ppi == 'CutRange' :
                                 CutStart = int( paramItemMatch.group(1) ) * 60 + int( paramItemMatch.group(2) )
                                 CutEnd   = int( paramItemMatch.group(3) ) * 60 + int( paramItemMatch.group(4) )
+                                if CutStart > videoFile['duration'] :
+                                    videoFile['error'].append('開始時間錯誤')
+                                if CutEnd ==  CutStart :
+                                    videoFile['error'].append('長度不得為0')
+                                if CutEnd < CutStart :
+                                    videoFile['error'].append('結束時間錯誤')
                                 videoFile['param']['Cut'] = {
                                     'start' : CutStart,
                                     'len'   : CutEnd - CutStart
@@ -314,16 +340,24 @@ while True:
                                 if paramItemMatch.group(2).lower() == 'm' :
                                     rate = rate * 1000
                                 rate = round( rate * 0.97 )
-                                videoFile['param'][ ppi ] = rate
+                                videoFile['param']['Bitrate'] = rate
 
                             if ppi == 'Size' :
-                                videoFile['param'][ ppi ] = int( paramItemMatch.group(1) )
+                                videoFile['param']['Size'] = int( paramItemMatch.group(1) )
 
                             if ppi == 'Resize' :
-                                videoFile['param'][ ppi ] = int( paramItemMatch.group(1) )
+                                videoFile['param']['Resize'] = int( paramItemMatch.group(1) )
 
                             if ppi == 'Framerate' :
-                                videoFile['param'][ ppi ] = int( paramItemMatch.group(1) )
+                                videoFile['param']['Framerate'] = int( paramItemMatch.group(1) )
+
+                            if ppi == 'Watermark' :
+                                # 檢查水印是否存在
+                                wmList = glob.glob( './watermark/' + paramItemMatch.group(1) + '.png' )
+                                if( len( wmList ) >= 1 ) :
+                                    videoFile['param']['Watermark'] = wmList[0]
+                                else :
+                                    videoFile['error'] = ['水印檔不存在']
 
                             continue
 
@@ -335,12 +369,15 @@ while True:
                         continue
 
             # 建立輸出的檔名
-            optName = re.sub( r'(_@.*)?\.(.+)$', '.ts.mp4', fileName )
+            optName = re.sub( r'(_@.*)?\.(.+)$', '.mp4', fileName )
             videoFile['optName'] =             optName
             videoFile['optPath'] = 'output/' + optName
 
             # 加入佇列
-            videoList.append( videoFile )
+            if len( videoFile['error'] ) > 0 :
+                invalidVideoList.append( videoFile )
+            else :
+                videoList.append( videoFile )
 
 
         time.sleep( 0.1 )
@@ -351,7 +388,7 @@ while True:
     # 處理檔案
     while len( videoList ) > 0:
 
-        print( '\n  = 找到以下檔案：\n' )
+        print( '\n  # 找到以下檔案：\n' )
 
         # 列出檔案
         for i in range( len( videoList ) ) :
@@ -359,16 +396,34 @@ while True:
             print( str( fileNo ).rjust( 6, ' '), end = '' )
             print( '. ' + videoList[i]['fileName'] )
 
+        print( '\n    以下檔案含有錯誤設定：\n' )
+
+        # 列出檔案
+        for i in range( len( invalidVideoList ) ) :
+
+            fileNo = i + 1
+            print( str( fileNo ).rjust( 6, ' '), end = '' )
+            print( '. ' + invalidVideoList[i]['fileName'] + '...錯誤：', end = '' )
+            print( '、'.join( invalidVideoList[i]['error'] ) )
+
+
         time.sleep( 0.1 )
-        print( '\n  = 開始轉檔：\n' )
+        print( '\n  # 開始轉檔：\n' )
 
         # 轉檔
         for i in range( len( videoList ) ) :
             fileNo    = i + 1
             videoFile = videoList[i]
 
+            if len( videoFile['error'] ) > 0 :
+                continue
 
-            print( str( fileNo ).rjust( 6, ' ') + '. ' + videoFile['fileName'] )
+            if videoFile['param']['Watermark'] != None :
+                watermarkList = glob.glob( './watermark/' + videoFile['param']['Watermark'] + '.png' )
+
+            vf = []
+
+            print( str( fileNo ).rjust( 6, ' ') + '. ' + videoFile['fileName'] + ' > ' + videoList[i]['optName'] )
 
             duration = videoFile['duration']
 
@@ -377,27 +432,14 @@ while True:
 
             bitrate = str( min( videoFile['bitrate'], round( defaultSizeMax / duration * 1000 * 8 ) ) ) + 'k'
 
-            # 產生時間碼字幕
-            timestampSubtitle = ''
-            start = videoFile['videoTime']
-            for sec in range( math.ceil( videoFile['duration'] ) ) :
-
-                t  = time.localtime( start + sec )
-                no = sec + 1
-
-                timestampSubtitle += str( sec ) + '\n'
-                timestampSubtitle += toTimecode( sec ) + ' --> ' + toTimecode(sec + 1) + '\n'
-                timestampSubtitle += time.strftime( '%Y/%m/%d %H:%M:%S', t ) + '\n\n'
-
-            f = open( videoFile['subFile'] , "w")
-            f.write( timestampSubtitle )
-            f.close()
-
-            vf = [ 'subtitles='+ videoFile['subFile'] +':force_style=\'Fontsize=12,PrimaryColour=&HFFFFFF&,BorderStyle=1,Outline=0,Shadow=0,Alignment=3,MarginR=8\'' ]
-
             # 縮放
+            vw = videoFile['width']
+            vh = videoFile['height']
+
             if videoFile['param']['Resize'] != None :
                 if videoFile['width'] > videoFile['param']['Resize'] :
+                    vw = videoFile['param']['Resize']
+                    vh = videoFile['height'] * ( videoFile['param']['Resize'] /  videoFile['width'] )
                     vf.append( 'scale='+ str(videoFile['param']['Resize']) +':-2:flags=lanczos' )
 
             # FPS
@@ -413,30 +455,76 @@ while True:
             command = [ ffmpegBinPath,
                     '-y',
                     '-hide_banner',
-                    '-loglevel',    'panic',
-                    '-i',            videoFile['filePath'],
-                    '-c:v',          encoder,
-                    '-vf',          ','.join( vf ),
-                    '-preset',      'slow',
-                    '-b:v',          bitrate,
+                    '-loglevel',       'panic',
+                    '-i',               videoFile['filePath']
                 ]
 
+            # 取得水印
+            if videoFile['param']['Watermark'] != None :
+                size = str( vw ) + 'x' + str( vh )
+                vf.append( '[1:v]scale=' + size + ' [ovrl], [0:v][ovrl]overlay=0:0' )
+                command.extend([
+                    '-i', videoFile['param']['Watermark']
+                ])
+
+            # 產生時間碼字幕
+            if videoFile['param']['DisableTime'] == True :
+                a = 1
+            else :
+                timestampSubtitle = ''
+                start = videoFile['videoTime']
+                for sec in range( math.ceil( videoFile['duration'] ) ) :
+
+                    t  = time.localtime( start + sec )
+                    no = sec + 1
+
+                    timestampSubtitle += str( sec ) + '\n'
+                    timestampSubtitle += toTimecode( sec ) + ' --> ' + toTimecode(sec + 1) + '\n'
+                    timestampSubtitle += time.strftime( '%Y/%m/%d %H:%M:%S', t ) + '\n\n'
+
+                f = open( videoFile['subFile'] , "w")
+                f.write( timestampSubtitle )
+                f.close()
+
+                vf.append( 'subtitles='+ videoFile['subFile'] +':force_style=\'Fontsize=12,PrimaryColour=&HFFFFFF&,BorderStyle=1,Outline=0,Shadow=0,Alignment=3,MarginR=8\'' )
+
+            if len( vf ) > 0 :
+                if videoFile['param']['Watermark'] == None :
+                    command.extend([
+                            '-vf', ','.join( vf ),
+                            '-c:v',   encoder,
+                        ])
+                else :
+                    command.extend([
+                            '-filter_complex', ','.join( vf ),
+                            '-c:v',             encoder,
+                        ])
+                command.extend([ '-preset', 'slow' ])
+
+            command.extend([ '-b:v', bitrate ])
+
             if videoFile['param']['Cut'] != None :
-                command.append( '-ss' )
-                command.append( str( videoFile['param']['Cut']['start'] ) )
-                command.append( '-t' )
-                command.append( str( videoFile['param']['Cut']['len'] ) )
-                command.append( '-pass' )
-                command.append( '2' )
+                command.extend([
+                    '-ss',   str( videoFile['param']['Cut']['start'] ),
+                    '-t',    str( videoFile['param']['Cut']['len'] ),
+                    '-pass', '2'
+                ])
 
             if videoFile['param']['AllowAudio'] != True :
                 command.append('-an')
 
             command.append( videoFile['optPath'] )
 
+            if DEBUG == True :
+                print( ' '.join( command ) )
+
             pipeResult = subprocess.run(command, stdout = subprocess.PIPE)
             result = pipeResult.stdout.decode('utf-8')
-            os.remove( videoFile['subFile']  )
+
+            if videoFile['param']['DisableTime'] == True :
+                a = 1
+            else :
+                os.remove( videoFile['subFile']  )
 
         print( '' )
 
