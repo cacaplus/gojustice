@@ -42,7 +42,7 @@ error  = []
 
 
 os.system('cls')
-print( 'GoJustice 影片時間戳記燒錄器 0.95' )
+print( 'GoJustice 影片時間戳記燒錄器 0.96' )
 print( 'https://github.com/cacaplus/gojustice\n' )
 
 
@@ -63,7 +63,7 @@ PATTERN = {
         'AllowAudio'  : r'^A$',
         'CutLength'   : r'^C(\d{2})(\d{2})L(\d{3,5})$',
         'CutRange'    : r'^C(\d{2})(\d{2})-(\d{2})(\d{2})$',
-        'Bitrate'     : r'^B(\d)+(k|m)$',
+        'Bitrate'     : r'^B(\d+)(k|m)$',
         'Size'        : r'^S(\d+)m$',
         'Resize'      : r'^R(\d{4})$',
         'Framerate'   : r'^F(\d{2,3})$',
@@ -287,7 +287,7 @@ while True:
             videoFile['param']['Size']        = None
             videoFile['param']['Resize']      = None
             videoFile['param']['Framerate']   = None
-            videoFile['param']['Size']        = 30
+            videoFile['param']['Size']        = None
             videoFile['param']['Watermark']   = None
             videoFile['param']['DisableTime'] = False
 
@@ -396,7 +396,8 @@ while True:
             print( str( fileNo ).rjust( 6, ' '), end = '' )
             print( '. ' + videoList[i]['fileName'] )
 
-        print( '\n    以下檔案含有錯誤設定：\n' )
+        if len( invalidVideoList ) > 0 :
+            print( '\n    以下檔案含有錯誤設定：\n' )
 
         # 列出檔案
         for i in range( len( invalidVideoList ) ) :
@@ -408,7 +409,7 @@ while True:
 
 
         time.sleep( 0.1 )
-        print( '\n  # 開始轉檔：\n' )
+        print( '\n  # 開始轉檔：' )
 
         # 轉檔
         for i in range( len( videoList ) ) :
@@ -423,14 +424,13 @@ while True:
 
             vf = []
 
-            print( str( fileNo ).rjust( 6, ' ') + '. ' + videoFile['fileName'] + ' > ' + videoList[i]['optName'] )
+            print( '\n' + str( fileNo ).rjust( 6, ' ') + '. ' + videoFile['fileName'] )
+            print( '          -> ' + videoList[i]['optName'] )
 
             duration = videoFile['duration']
 
             if videoFile['param']['Duration'] != None :
                 duration = videoFile['param']['Duration']
-
-            bitrate = str( min( videoFile['bitrate'], round( defaultSizeMax / duration * 1000 * 8 ) ) ) + 'k'
 
             # 縮放
             vw = videoFile['width']
@@ -445,6 +445,7 @@ while True:
             # FPS
 
             # 產生 bitrate
+            bitrate = str( videoFile['bitrate'] ) + 'k'
             if videoFile['param']['Size'] != None :
                 bitrate = str( min( videoFile['bitrate'], round( videoFile['param']['Size'] / duration * 1000 * 8 ) ) ) + 'k'
             else :
