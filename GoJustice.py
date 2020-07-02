@@ -17,7 +17,9 @@ from pprint import pprint
 # h264_mf     # MediaFoundation (win)
 
 
-DEBUG = False
+DEBUG  = False
+RUNENC = True
+DELSRT = True
 
 
 def toTimecode( sec ) :
@@ -42,7 +44,7 @@ error  = []
 
 
 os.system('cls')
-print( 'GoJustice 影片時間戳記燒錄器 0.96' )
+print( 'GoJustice 影片時間戳記燒錄器 0.98' )
 print( 'https://github.com/cacaplus/gojustice\n' )
 
 
@@ -65,8 +67,8 @@ PATTERN = {
         'CutRange'    : r'^C(\d{2})(\d{2})-(\d{2})(\d{2})$',
         'Bitrate'     : r'^B(\d+)(k|m)$',
         'Size'        : r'^S(\d+)m$',
-        'Resize'      : r'^R(\d{4})$',
-        'Framerate'   : r'^F(\d{2,3})$',
+        'Resize'      : r'^R(\d{3,4})$',
+        'Framerate'   : r'^F(\d.+)$',
         'Watermark'   : r'^(W(\d+)?)$',
         'DisableTime' : r'^TX$',
 
@@ -77,12 +79,6 @@ PATTERN = {
     },
 
     'CODEC' : r'^codec_name=(h264|hevc|mjpeg)$'
-}
-
-FPS = {
-    24 : 'fps=24000/1001',
-    30 : 'fps=30000/1001',
-    60 : 'fps=60000/1001',
 }
 
 fileListOrig     = []
@@ -112,9 +108,10 @@ while True:
         print( '     1. 正在檢查執行環境...' )
 
         # 清除暫存檔
-        srtList = glob.glob( './*.srt' )
-        for i in range( len( srtList ) ) :
-            os.remove( srtList[ i ]  )
+        if DELSRT :
+            srtList = glob.glob( './*.srt' )
+            for i in range( len( srtList ) ) :
+                os.remove( srtList[ i ]  )
 
 
         # 資料夾檢查
@@ -236,14 +233,15 @@ while True:
             if 'streams' not in result :
                 continue
 
-            fr = result['streams'][0]['r_frame_rate'].split('/')
-
             videoFile['codec']       =        result['streams'][0]['codec_name']
             videoFile['duration']    = float( result['streams'][0]['duration'] )
             videoFile['width']       =   int( result['streams'][0]['width'] )
             videoFile['height']      =   int( result['streams'][0]['height'] )
             videoFile['bitrate']     =   int( result['streams'][0]['bit_rate'][0:-3] )
-            videoFile['framerate']   = round( int(fr[0]) / int(fr[1]), 2 )
+
+            fr = result['streams'][0]['r_frame_rate' ]
+            frMatch = re.search( r'^(\d+)(\/(\d+))?$', fr, flags = re.IGNORECASE )
+            videoFile['framerate'] = [ int( frMatch.group(1) ), int( frMatch.group(3) ) ]
 
             if 'tags' in result['streams'][0] :
                 if 'handler_name' in result['streams'][0]['tags'] :
@@ -301,11 +299,8 @@ while True:
                         paramItemMatch = re.search( PATTERN['PARAM'][ppi], paramArray[pi], flags = re.IGNORECASE )
                         if paramItemMatch != None :
 
-                            if ppi == 'AllowAudio' :
-                                videoFile['param']['AllowAudio'] = True
-
-                            if ppi == 'DisableTime' :
-                                videoFile['param']['DisableTime'] = True
+                            if ppi in [ 'AllowAudio', 'DisableTime' ] :
+                                videoFile['param'][ ppi ] = True
 
                             if ppi == 'CutLength' :
                                 CutStart = int( paramItemMatch.group(1) ) * 60 + int( paramItemMatch.group(2) )
@@ -342,14 +337,11 @@ while True:
                                 rate = round( rate * 0.97 )
                                 videoFile['param']['Bitrate'] = rate
 
-                            if ppi == 'Size' :
-                                videoFile['param']['Size'] = int( paramItemMatch.group(1) )
-
-                            if ppi == 'Resize' :
-                                videoFile['param']['Resize'] = int( paramItemMatch.group(1) )
+                            if ppi in [ 'Size', 'Resize' ]  :
+                                videoFile['param'][ ppi ] = int( paramItemMatch.group(1) )
 
                             if ppi == 'Framerate' :
-                                videoFile['param']['Framerate'] = int( paramItemMatch.group(1) )
+                                videoFile['param']['Framerate'] = paramItemMatch.group(1)
 
                             if ppi == 'Watermark' :
                                 # 檢查水印是否存在
@@ -408,6 +400,12 @@ while True:
             print( '、'.join( invalidVideoList[i]['error'] ) )
 
 
+        if RUNENC == False :
+
+            print( '\n    測試模式，忽略轉檔。\n' )
+            break
+
+
         time.sleep( 0.1 )
         print( '\n  # 開始轉檔：' )
 
@@ -440,9 +438,6 @@ while True:
                 if videoFile['width'] > videoFile['param']['Resize'] :
                     vw = videoFile['param']['Resize']
                     vh = videoFile['height'] * ( videoFile['param']['Resize'] /  videoFile['width'] )
-                    vf.append( 'scale='+ str(videoFile['param']['Resize']) +':-2:flags=lanczos' )
-
-            # FPS
 
             # 產生 bitrate
             bitrate = str( videoFile['bitrate'] ) + 'k'
@@ -489,6 +484,62 @@ while True:
 
                 vf.append( 'subtitles='+ videoFile['subFile'] +':force_style=\'Fontsize=12,PrimaryColour=&HFFFFFF&,BorderStyle=1,Outline=0,Shadow=0,Alignment=3,MarginR=8\'' )
 
+            # 產生 FPS
+            if videoFile['param']['Framerate'] != None :
+
+                # 分析原始
+                frSrc = {
+                    'i' : False,
+                }
+
+                if videoFile['framerate'][1] == 1001 :
+                    frSrc[i] = True
+
+                frDist = None
+
+                # 分析參數
+                while True :
+
+                    frF1Match = re.search( r'^(\d+)$', str( videoFile['param']['Framerate'] ), flags = re.IGNORECASE )
+
+                    if frF1Match != None :
+                        if frSrc[i] == True :
+                            frDist = frF1Match.group(0) + '000/1001'
+                        else :
+                            frDist = frF1Match.group(0) + '/1'
+
+                        break
+
+                    frF2Match = re.search( r'^(\d+.\d+)$', str( videoFile['param']['Framerate'] ), flags = re.IGNORECASE )
+                    if frF2Match != None :
+                        if frSrc[i] == True :
+                            if frF2Match.group(0) in [ '23.976', '23.98' ] :
+                                frDist = '24000/1001'
+                            if frF2Match.group(0) in [ '29.97' ] :
+                                frDist = '30000/1001'
+                            if frF2Match.group(0) in [ '59.94' ] :
+                                frDist = '60000/1001'
+                            if frF2Match.group(0) in [ '119.88' ] :
+                                frDist = '120000/1001'
+                        else :
+                            if frF2Match.group(0) in [ '23.976', '24.98' ] :
+                                frDist =  '24/1'
+                            if frF2Match.group(0) in [ '29.97' ] :
+                                frDist =  '30/1'
+                            if frF2Match.group(0) in [ '59.94' ] :
+                                frDist =  '60/1'
+                            if frF2Match.group(0) in [ '119.88' ] :
+                                frDist = '120/1'
+                        break
+                    break
+
+                if frDist != None :
+                    vf.append('fps=fps=' + frDist )
+
+            # FPS
+            if videoFile['param']['Resize'] != None :
+                vf.append( 'scale='+ str(videoFile['param']['Resize']) +':-2:flags=lanczos' )
+
             if len( vf ) > 0 :
                 if videoFile['param']['Watermark'] == None :
                     command.extend([
@@ -522,10 +573,11 @@ while True:
             pipeResult = subprocess.run(command, stdout = subprocess.PIPE)
             result = pipeResult.stdout.decode('utf-8')
 
-            if videoFile['param']['DisableTime'] == True :
-                a = 1
-            else :
-                os.remove( videoFile['subFile']  )
+            if DELSRT :
+                if videoFile['param']['DisableTime'] == True :
+                    a = 1
+                else :
+                    os.remove( videoFile['subFile']  )
 
         print( '' )
 
