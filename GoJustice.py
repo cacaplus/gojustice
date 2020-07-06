@@ -44,7 +44,7 @@ error  = []
 
 
 os.system('cls')
-print( 'GoJustice 影片時間戳記燒錄器 0.98' )
+print( 'GoJustice 影片時間戳記燒錄器 0.981' )
 print( 'https://github.com/cacaplus/gojustice\n' )
 
 
@@ -71,6 +71,9 @@ PATTERN = {
         'Framerate'   : r'^F(\d.+)$',
         'Watermark'   : r'^(W(\d+)?)$',
         'DisableTime' : r'^TX$',
+        'Turn'        : r'^(T|TL|TR)$',
+        'Flip'        : r'^(FH|FV)$',
+        'Crop'        : r'^CR(\d+)(x(\d+)((\-[N|S|E|W]{1,2}))?)?$',
 
         # 區域預設
         'isHighway'   : r'^HW$',
@@ -265,8 +268,9 @@ while True:
                 if match != None :
                     videoTime = time.mktime( time.strptime( match.group(1), '%Y%m%d'+ match.group(3) +'%H%M%S' ) )
                 else :
-                    y = time.strftime( '%Y' )
-                    videoTime = time.mktime( time.strptime( time.strftime( '%Y' ) + matchS.group(1), '%Y%m%d'+ matchS.group(3) +'%H%M%S' ) )
+                    if matchS != None :
+                        y = time.strftime( '%Y' )
+                        videoTime = time.mktime( time.strptime( time.strftime( '%Y' ) + matchS.group(1), '%Y%m%d'+ matchS.group(3) +'%H%M%S' ) )
 
             if videoTime == None :
                 continue
@@ -559,7 +563,7 @@ while True:
                 command.extend([
                     '-ss',   str( videoFile['param']['Cut']['start'] ),
                     '-t',    str( videoFile['param']['Cut']['len'] ),
-                    '-pass', '2'
+                    # '-pass', '2'
                 ])
 
             if videoFile['param']['AllowAudio'] != True :
